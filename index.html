@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Employee Management</title>
+    <style>
+        body { font-family: Arial, max-width: 800px; margin: 20px auto; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f2f2f2; }
+        input { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        button { padding: 8px 15px; background: #007bff; color: white; border: none; cursor: pointer; margin-top: 10px; }
+        .delete-btn { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <h2>Employee Management System</h2>
+    <div style="background:#f9f9f9; padding:15px; border-radius:5px;">
+        <h3>Add / Update Employee</h3>
+        <input type="hidden" id="empId">
+        <input type="text" id="name" placeholder="Full Name">
+        <input type="text" id="role" placeholder="Job Role">
+        <input type="email" id="email" placeholder="Email Address">
+        <button onclick="saveEmployee()">Save Employee</button>
+        <button onclick="clearForm()" style="background:#6c757d;">Clear</">Clear</button>
+    </div>
+    <h3>Employee Records</h3>
+    <table id="empTable"><thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Action</th></tr></thead><tbody id="empBody"></tbody></table>
+
+    <script>
+        const API_URL = "https://employee-api.220995.workers.dev/"; // <-- PASTE YOUR WORKER URL HERE
+
+        async function loadEmployees() {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            const tbody = document.getElementById("empBody");
+            tbody.innerHTML = "";
+            data.forEach(emp => {
+                tbody.innerHTML += `<tr>
+                    <td>${emp.name}</td><td>${emp.role}</td><td>${emp.email}</td>
+                    <td>
+                        <button onclick="editEmployee(${emp.id}, '${emp.name}', '${emp.role}', '${emp.email}')">Edit</button>
+                        <button class="delete-btn" onclick="deleteEmployee(${emp.id})">Delete</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        async function saveEmployee() {
+            const id = document.getElementById("empId").value;
+            const payload = {
+                name: document.getElementById("name").value,
+                role: document.getElementById("role").value,
+                email: document.getElementById("email").value
+            };
+            const method = id ? "PUT" : "POST";
+            const url = id ? `${API_URL}/${id}` : API_URL;
+
+            await fetch(url, { method, headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload) });
+            clearForm();
+            loadEmployees();
+        }
+
+        async function deleteEmployee(id) {
+            if(confirm("Delete this record?")) {
+                await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+                loadEmployees();
+            }
+        }
+
+        function editEmployee(id, name, role, email) {
+            document.getElementById("empId").value = id;
+            document.getElementById("name").value = name;
+            document.getElementById("role").value = role;
+            document.getElementById("email").value = email;
+        }
+
+        function clearForm() {
+            document.getElementById("empId").value = "";
+            document.getElementById("name").value = "";
+            document.getElementById("role").value = "";
+            document.getElementById("email").value = "";
+        }
+
+        loadEmployees(); // Load on start
+    </script>
+</body>
+</html>
